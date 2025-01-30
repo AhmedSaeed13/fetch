@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Post Fetcher</title>
+</head>
+<body>
+    <h1>Instagram Post Fetcher</h1>
+    <form id="instagramForm">
+        <label for="username">Instagram Username:</label>
+        <input type="text" id="username" name="username" required>
+        <button type="submit">Search</button>
+    </form>
+
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('instagramForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            fetchPosts(username);
+        });
+
+        function fetchPosts(username) {
+            fetch(`fetch_posts.php?username=${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('results');
+                    resultsDiv.innerHTML = ''; // Clear previous results
+
+                    if (data.error) {
+                        resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                    } else {
+                        data.forEach(post => {
+                            const postElement = document.createElement('div');
+                            postElement.innerHTML = `
+                                <h2>${post.caption}</h2>
+                                <img src="${post.image_url}" alt="${post.caption}" style="max-width: 100%;">
+                            `;
+                            resultsDiv.appendChild(postElement);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
