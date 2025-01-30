@@ -19,6 +19,9 @@
             border-bottom: 1px solid #ccc;
             padding-bottom: 10px;
         }
+        .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -31,8 +34,9 @@
 
     <div id="results">
         <?php
+        // PHP code to fetch posts from RapidAPI
         if (isset($_GET['username'])) {
-            $username = $_GET['username'];
+            $username = htmlspecialchars($_GET['username']); // Sanitize input
 
             $curl = curl_init();
 
@@ -56,10 +60,11 @@
             curl_close($curl);
 
             if ($err) {
-                echo "<p>Error: cURL Error #:" . $err . "</p>";
+                echo '<p class="error">Error: cURL Error - ' . htmlspecialchars($err) . '</p>';
             } else {
                 $data = json_decode($response, true);
-                if (isset($data['data'])) {
+
+                if (isset($data['data']) && is_array($data['data'])) {
                     foreach ($data['data'] as $post) {
                         echo '<div class="post">';
                         if (isset($post['caption'])) {
@@ -71,7 +76,7 @@
                         echo '</div>';
                     }
                 } else {
-                    echo "<p>No posts found for this username.</p>";
+                    echo '<p class="error">No posts found for this username.</p>';
                 }
             }
         }
