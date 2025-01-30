@@ -4,48 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram Post Fetcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #results img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        .post {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Instagram Post Fetcher</h1>
-    <form id="instagramForm">
+    <form method="GET">
         <label for="username">Instagram Username:</label>
         <input type="text" id="username" name="username" required>
         <button type="submit">Search</button>
     </form>
 
-    <div id="results"></div>
+    <div id="results">
+        <?php
+        if (isset($_GET['username'])) {
+            $username = $_GET['username'];
 
-    <script>
-        document.getElementById('instagramForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            fetchPosts(username);
-        });
+            $curl = curl_init();
 
-        function fetchPosts(username) {
-            fetch(`fetch_posts.php?username=${username}`)
-                .then(response => response.json())
-                .then(data => {
-                    const resultsDiv = document.getElementById('results');
-                    resultsDiv.innerHTML = ''; // Clear previous results
+            curl_setopt_array($curl, [
+                CURLOPT_URL => "https://instagram-scraper-api2.p.rapidapi.com/v1/posts?username_or_id_or_url={$username}&url_embed_safe=true",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "GET",
+                CURLOPT_HTTPHEADER => [
+                    "x-rapidapi-host: instagram-scraper-api2.p.rapidapi.com",
+                    "x-rapidapi-key: 1fcb997f25mshbde5dfeab9feabdp177c57jsn49ab5784887c"
+                ],
+            ]);
 
-                    if (data.error) {
-                        resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
-                    } else {
-                        data.forEach(post => {
-                            const postElement = document.createElement('div');
-                            postElement.innerHTML = `
-                                <h2>${post.caption}</h2>
-                                <img src="${post.image_url}" alt="${post.caption}" style="max-width: 100%;">
-                            `;
-                            resultsDiv.appendChild(postElement);
-                        });
+            $response = curl_exec($curl);
+            $err = curl_error($curl);
+
+            curl_close($curl);
+
+            if ($err) {
+                echo "<p>Error: cURL Error #:" . $err . "</p>";
+            } else {
+                $data = json_decode($response, true);
+                if (isset($data['data'])) {
+                    foreach ($data['data'] as $post) {
+                        echo '<div class="post">';
+                        if (isset($post['caption'])) {
+                            echo '<h2>' . htmlspecialchars($post['caption']) . '</h2>';
+                        }
+                        if (isset($post['image_url'])) {
+                            echo '<img src="' . htmlspecialchars($post['image_url']) . '" alt="Post Image">';
+                        }
+                        echo '</div>';
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                } else {
+                    echo "<p>No posts found for this username.</p>";
+                }
+            }
         }
-    </script>
+        ?>
+    </div>
 </body>
 </html>
